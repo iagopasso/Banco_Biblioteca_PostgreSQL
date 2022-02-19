@@ -111,6 +111,26 @@ $ /usr/lib/postgresql/9.6/bin/pg_ctl -D slave -l slave/slave.log -o '-p5432' sta
 
 select * from pg_stat_replication
 
+pid		 | 3289529
+usesysid         | 16384
+usename          | master
+application_name | master
+client_addr      | 192.168.0.16
+client_hostname  | slave
+client_port      | 47268
+backend_start    | 2022-02-19 16:17:45.979908+01
+backend_xmin     |
+state            | streaming
+sent_lsn         | 0/30005C8
+write_lsn        | 0/30005C8
+flush_lsn        | 0/30005C8
+replay_lsn       | 0/30005C8
+write_lag        | 00:00:00.00002
+flush_lag        | 00:00:00.000026
+replay_lag       | 00:00:00.000094
+sync_priority    | 0
+sync_state       | async
+reply_time       | 2022-02-19 16:17:46.119517+01
 
 ## Caso seja necessário promover o servidor slave à master, executamos o comando a seguir:
 
