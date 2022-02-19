@@ -1,0 +1,27 @@
+##SCHEMAS
+
+ALTER TABLE Emprestimos set schema operacao;
+ALTER TABLE Autores SET SCHEMA cadastro;
+ALTER TABLE Titulos_dos_autores SET SCHEMA cadastro;
+ALTER TABLE Categorias SET SCHEMA cadastro;
+ALTER TABLE Titulos_bibliograficos SET SCHEMA cadastro;
+ALTER TABLE Exemplares_dos_titulos SET SCHEMA cadastro;
+ALTER TABLE Bibliotecarios SET SCHEMA cadastro;
+ALTER TABLE Associados SET SCHEMA cadastro;
+
+
+##FUNCAO MUDANÇA DE ESTADO:
+
+CREATE OR REPLACE FUNCTION mudanca_estado_conservacao(exemplar_id int , estado_novo varchar)
+  RETURNS SETOF record AS
+$$ 
+BEGIN
+    UPDATE Exemplares_dos_titulos 
+     SET estado = estado_novo
+       WHERE exemplar_id = id_exemplar AND estado NOT IN ('Baixado');
+END;         
+$$
+    LANGUAGE plpgsql;
+
+##chamar a funcao
+SELECT mudanca_estado_conservacao(1,'Mal-Conservado');

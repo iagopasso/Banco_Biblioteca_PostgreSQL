@@ -1,0 +1,83 @@
+## CATEGORIAS
+
+INSERT INTO Categorias (nome_categoria) VALUES ('Ficção Científica');
+INSERT INTO Categorias (nome_categoria) VALUES ('Romance');
+INSERT INTO Categorias (nome_categoria) VALUES ('Drama');
+INSERT INTO Categorias (nome_categoria) VALUES ('Infanto Juvenil');
+
+## AUTORES
+
+INSERT INTO Autores (nome_autor) VALUES ('Machado de Assis');
+INSERT INTO Autores (nome_autor) VALUES ('Agatha Christie');
+INSERT INTO Autores (nome_autor) VALUES ('Monteiro Lobato');
+INSERT INTO Autores (nome_autor) VALUES ('Ziraldo');
+
+## BIBLIOTECARIOS
+
+INSERT INTO Bibliotecarios (nome_bibliotecario) VALUES ('Andre');
+INSERT INTO Bibliotecarios (nome_bibliotecario) VALUES ('Jade');
+INSERT INTO Bibliotecarios (nome_bibliotecario) VALUES ('Larissa');
+
+## TITULOS BIBLIOGRAFICOS
+
+INSERT INTO Titulos_bibliograficos  (nome_titulo, tipo_titulo, num_paginas, num_edicao, categoria) VALUES ('A Máquina do Tempo', 'Livro', 208, '1° edição', 1);
+INSERT INTO Titulos_bibliograficos  (nome_titulo, tipo_titulo, num_paginas, num_edicao, categoria) VALUES ('Memórias Póstumas de Brás Cubas', 'Livro', 250, '2° edição', 2);
+INSERT INTO Titulos_bibliograficos  (nome_titulo, tipo_titulo, num_paginas, num_edicao, categoria) VALUES ('A chave do Tamanho', 'Revista', 144, '3° edição', 3);
+INSERT INTO Titulos_bibliograficos  (nome_titulo, tipo_titulo, num_paginas, num_edicao, categoria) VALUES ('O menino Maluquinho','Revista', 112, '4° edição' , 4);
+
+## EXEMPLARES DOS TITULOS
+
+INSERT INTO Exemplares_dos_titulos(data_hora_entrada, destinacao, local_bibli, situacao_emprestimo, estado_titulo, titulos_id) VALUES ('2022-02-17 00:00:00', 'Uso Interno', '1° Andar', 'FALSE', 'Novo', 1);
+INSERT INTO Exemplares_dos_titulos(registro_baixa, data_hora_entrada, destinacao, local_bibli, situacao_emprestimo, estado_titulo, titulos_id) VALUES ( 2022-02-17, '2020-03-17 05:00:00', 'Emprestimo', '2° Andar', 'TRUE', 'Baixado', 2);
+INSERT INTO Exemplares_dos_titulos(data_hora_entrada, destinacao, local_bibli, situacao_emprestimo, estado_titulo, titulos_id) VALUES ('2022-02-16 00:00:00', 'Emprestimo', '3° Andar', 'TRUE', 'Mal Conservado', 3);
+INSERT INTO Exemplares_dos_titulos(registro_baixa, data_hora_entrada, destinacao, local_bibli, situacao_emprestimo, estado_titulo, titulos_id) VALUES ( 2023-06-01, '2020-03-17 05:00:00', 'Uso Interno', '4° Andar', 'FALSE', 'Baixado', 4);
+
+
+## EMPRESTIMOS
+
+INSERT INTO Emprestimos (estado_sair, estado_retornar, data_hora_emprestimo, data_hora_devolucao, associados_id, bibliotecarios_id, exemplares_id) VALUES ('Novo', 'Novo', '2022-03-10 17:00:00', '2022-04-10 17:00:00', 1, 1, 1);
+INSERT INTO Emprestimos (estado_sair, estado_retornar, data_hora_emprestimo, data_hora_devolucao, associados_id, bibliotecarios_id, exemplares_id) VALUES ('Mal Conservado', 'Baixado', '2021-03-17 10:00:00', '2022-02-17 10:00:00', 2, 2, 2);
+INSERT INTO Emprestimos (estado_sair, estado_retornar, data_hora_emprestimo, data_hora_devolucao, associados_id, bibliotecarios_id, exemplares_id) VALUES ('Mal Conservado', 'Mal Conservado', '2022-03-10 17:00:00', '2022-04-10 17:00:00', 3, 3, 3);
+INSERT INTO Emprestimos (estado_sair, estado_retornar, data_hora_emprestimo, data_hora_devolucao, associados_id, bibliotecarios_id, exemplares_id) VALUES ('Novo', 'Novo', '2020-04-17 05:00:00', '2023-06-01 05:00:00', 4, 4, 4);
+
+
+
+## TITULOS DOS AUTORES
+
+INSERT INTO Titulos_dos_autores (titulos_autor_id, titulos_id, autores_id) VALUES (1, 1, 1);
+INSERT INTO Titulos_dos_autores (titulos_autor_id, titulos_id, autores_id) VALUES (2, 2, 2);
+INSERT INTO Titulos_dos_autores (titulos_autor_id, titulos_id, autores_id) VALUES (3, 3, 3);
+INSERT INTO Titulos_dos_autores (titulos_autor_id, titulos_id, autores_id) VALUES (4, 4, 4);
+
+
+## ASSOCIADOS
+
+INSERT INTO Associados (nome_associado, telefone, email, adimplente) VALUES ('Zé Roberto', (98)99175-8005, 'zeroberto@gmail.com', 'TRUE');
+INSERT INTO Associados (nome_associado, telefone, email, adimplente) VALUES (2, 'José', 99468-8305, 'jose@gmail.com', 'TRUE');
+INSERT INTO Associados (nome_associado, telefone, email, adimplente) VALUES (3, 'Carlos', 99345-5043, 'carlos@gmail.com', 'FALSE');
+INSERT INTO Associados (nome_associado, telefone, email, adimplente) VALUES (4, 'Felipe', 99567-3512, 'felipe@gmail.com', 'FALSE');
+
+
+# ACERVO POR AUTOR: 
+
+SELECT au.nome_autor, ti.nome_titulo, count(ex.id_exemplar) as exemplares, (SELECT count(id_exemplar) as exemplares_emprestados FROM Exemplares_dos_titulos ex WHERE ex.situacao_emprestimo = 'TRUE' AND ex.estado NOT IN ('Baixado')) FROM Autores au, Titulos_bibliograficos ti , Exemplares_dos_titulos ex, Titulos_dos_autores tia WHERE tia.titulos_id = ti.id_titulo AND tia.autores_id = au.id_autor AND ti.id_titulo = ex.titulos_id GROUP BY au.nome_autor, ti.nome_titulo;
+
+
+# ACERVO POR TITULO
+
+CREATE INDEX idx_titulos ON Titulos_bibliograficos;
+
+# EMPRESTIMOS POR PERIODO:
+
+
+SELECT ti.nome_titulo, count(ex.destinacao) as uso_interno, (SELECT count(ex.destinacao) as emprestimo FROM Exemplares_dos_titulos ex , Titulos_bibliograficos ti WHERE ti.id_titulo = ex.titulos_id AND destinacao = 'Emprestimo'), (SELECT count(id_exemplar) as exemplares_emprestados FROM Exemplares_dos_titulos ex WHERE ex.situacao_emprestimo = 'TRUE' AND ex.estado NOT IN ('Baixado')) FROM Exemplares_dos_titulos ex , Titulos_bibliograficos ti WHERE ti.id_titulo = ex.titulos_id AND destinacao = 'Uso Interno' GROUP BY ti.nome_titulo;
+
+
+# EMPREGO POR PERIODO:
+
+## EMPRESTIMOS POR PERIODO:
+
+SELECT id_emprestimo as Emprestimos_por_datas FROM Emprestimos WHERE data_hora_emprestimo BETWEEN '2019-01-01 12:00:00' AND '2019-03-10 18:00:00';
+
+SELECT ti.nome_titulo , em.data_hora_emprestimo, ass.nome_associado , ass.adimplente, bi.nome_bibliotecario, em.estado_sair, em.estado_retornar FROM Titulos_bibliograficos ti, Exemplares_dos_titulos ex, Emprestimos em, Associados ass, Bibliotecarios bi WHERE em.id_emprestimo = ex.titulos_id AND adimplente = 'TRUE' AND bi.id_bibliotecario = em.bibliotecarios_id;
+
