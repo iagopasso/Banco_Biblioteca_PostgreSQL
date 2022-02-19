@@ -1,0 +1,140 @@
+## A - USUARIOS 
+
+CREATE ROLE usr_gravar LOGIN PASSWORD 'Iagopasso1';
+
+CREATE ROLE usr_ler LOGIN PASSWORD 'Iagopasso2';
+
+usr_gravar 
+senha: 'Iagopasso1'
+
+usr_ler
+senha: 'Iagopasso2'
+
+## PERMISSOES
+
+GRANT INSERT ON ALL TABLES IN SCHEMA cadastro TO usr_gravar;
+GRANT INSERT ON ALL TABLES IN SCHEMA operacao TO usr_gravar;
+
+## log
+
+## B - GRAVACAO DO LOG POSTGRES
+
+## MUDANDO O LOG
+
+ cd /etc/postgresql/12/main/
+
+ sudo nano postgresql.conf
+
+ log_statement = 'mod'  
+
+## ACESSANDO O LOG
+
+ sudo systemctl restart postgresql
+
+ /var/log/postgresql
+
+ nano postgresql-12-main.log
+
+
+## passos para  o segundo servidor
+
+#instalação o PostgreSQL
+
+sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+
+wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+
+sudo apt-get update
+
+sudo apt-get install postgresql-9.6
+
+#criação dos cluster  e criacao do servidor replica
+
+
+# CRIAÇÃO DE UM CLUSTER
+
+postgres@stretch:~/master$ /usr/lib/postgresql/914/bin/initdb -D master
+
+postgres@stretch:~/master$ ls -lh
+
+/usr/lib/postgresql/14/bin/pg_ctl -D master -l master/master.log -o '-p5432' start
+
+# Alterar os parâmetros necessário para realizar um backup binário do cluster master
+
+createuser -P --replication -p 5432 usr_replica
+
+Enter password for new role: 12345
+
+Enter it again: 12345
+
+# Adicionar o usuário ‘replication‘ à relação de conexões autorizadas no arquivo pg_hba.conf
+
+cd /var/lib/postgresql/master/
+
+# Arquivo master/pg_hba.conf
+host replication replication 127.0.0.1/32 md5
+
+# As alterações só terão efeito após executarmos a função pg_reload_conf():
+
+psql -c "select pg_reload_conf();"
+
+## Especificar no cluster o número de conexões de replicação autorizadas.
+
+# Arquivo master/postgresql.conf
+
+max_wal_senders = 2
+
+wal_level = replica
+
+archive_mode = on
+
+archive_command = 'exit 0'
+
+## E então, podemos reiniciar o cluster:
+
+ /usr/lib/postgresql/9.6/bin/pg_ctl -D master -l master/master.log -o '-p5432' restart
+
+## Uma cópia do cluster master será criada no diretório ‘slave‘:
+
+ pg_basebackup -D slave -h 192.168.0.15 -p5432 -U replication -P
+
+ ## Realizar queries apenas de leitura (SELECTS).
+
+# Arquivo slave/postgresql.conf
+hot_standby = on
+
+## Inicie a instância slave:
+
+$ /usr/lib/postgresql/9.6/bin/pg_ctl -D slave -l slave/slave.log -o '-p5432' start
+
+## TESTANDO A REPLICAÇÃO:
+
+select * from pg_stat_replication
+
+-[ RECORD 1 ]----+------------------------------
+pid		 | 3289529
+usesysi           | 16384
+usename          | master
+application_name | master
+client_addr        | 192.168.0.16
+client_hostname  | slave
+client_port      | 47268
+backend_start    | 2022-02-19 16:17:45.979908+01
+backend_xmin     |
+state            | streaming
+sent_lsn         | 0/30005C8
+write_lsn        | 0/30005C8
+flush_lsn        | 0/30005C8
+replay_lsn       | 0/30005C8
+write_lag        | 00:00:00.00002
+flush_lag        | 00:00:00.000026
+replay_lag       | 00:00:00.000094
+sync_priority    | 0
+sync_state       | async
+reply_time       | 2022-02-19 16:17:46.119517+01
+
+## Caso seja necessário promover o servidor slave à master, executamos o comando a seguir:
+
+usr/lib/postgresql/9.6/bin/pg_ctl -D slave -o '-p5434' promote
+
+server promoting
